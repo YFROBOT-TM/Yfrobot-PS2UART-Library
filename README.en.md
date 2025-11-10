@@ -1,4 +1,8 @@
-# YFPS2UART Library
+# YFPS2UART Library[![中文版本](https://img.shields.io/badge/-中文-red)](README.md)
+
+## Language Switch
+- [English](README.en.md)
+- [中文 (Chinese)](README.md)
 
 ## Overview
 The YFPS2UART is a powerful Arduino library for connecting PS2 controllers via UART serial communication. This library supports multiple Arduino-compatible boards, including Arduino UNO and ESP32 series, providing rich APIs for reading button states, joystick values, sending vibration commands, and more.
