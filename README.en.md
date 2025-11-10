@@ -7,6 +7,10 @@
 ## Overview
 The YFPS2UART is a powerful Arduino library for connecting PS2 controllers via UART serial communication. This library supports multiple Arduino-compatible boards, including Arduino UNO and ESP32 series, providing rich APIs for reading button states, joystick values, sending vibration commands, and more.
 
+## Product Purchase Links
+- Official Website: [https://www.yfrobot.com/](https://www.yfrobot.com/)
+- Taobao Store: [https://yfrobot.taobao.com/](https://yfrobot.taobao.com/)
+
 ## Features
 - Supports Arduino UNO and ESP32 series boards
 - Automatic controller connection detection
@@ -30,6 +34,26 @@ The YFPS2UART is a powerful Arduino library for connecting PS2 controllers via U
 3. Restart Arduino IDE to recognize the new library
 
 ## Hardware Connection
+
+### Receiver & Controller Indicator Lights
+- Both the receiver and controller have two indicator lights: red and green
+- Red light: Power indicator (always on when powered)
+- Green light: Connection status indicator
+  - Blinking: Not connected or pairing in progress
+  - Solid: Successfully paired and connected
+
+### Response Times & Timing Information
+- **Vibration Duration**: 0.5 seconds per vibration command
+- **Controller Pairing Window**: Approximately 2 seconds
+- **Initialization Time**: The receiver module initializes within 1-2 seconds after power-on
+- **Controller Sleep Timer**:
+  - When not connected: Sleeps after 15 seconds of inactivity
+  - When connected: Sleeps after 2 minutes of inactivity
+- **Controller Pairing Behavior**:
+  - If not powered off: Remembers the last paired receiver and automatically reconnects when waking up with START button
+  - If powered off: Loses pairing memory and will pair with any available receiver
+
+### Arduino UNO R3 Connection
 
 ### Arduino UNO R3 Connection
 - Controller module RX connects to Arduino TX (10)
