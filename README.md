@@ -1,11 +1,9 @@
 # YFPS2UART 库
 
-## 概述 (Overview)
+## 概述
 YFPS2UART 是一个功能强大的 Arduino 库，用于通过 UART 串行通信接口连接 PS2 手柄。该库支持多种 Arduino 兼容板，包括 Arduino UNO 和 ESP32 系列，提供了丰富的 API 用于读取按键状态、摇杆值、发送震动命令等功能。
 
-The YFPS2UART is a powerful Arduino library for connecting PS2 controllers via UART serial communication. This library supports multiple Arduino-compatible boards, including Arduino UNO and ESP32 series, providing rich APIs for reading button states, joystick values, sending vibration commands, and more.
-
-## 特性 (Features)
+## 特性
 - 支持 Arduino UNO 和 ESP32 系列主板
 - 自动检测手柄连接状态
 - 按键状态读取（按下/释放/按住）
@@ -15,44 +13,35 @@ The YFPS2UART is a powerful Arduino library for connecting PS2 controllers via U
 - 支持 AT 命令通信（查询版本、修改波特率等）
 - 内存优化设计，适用于资源有限的平台
 
-- Supports Arduino UNO and ESP32 series boards
-- Automatic controller connection detection
-- Button state reading (pressed/released/hold)
-- Joystick analog value reading (X/Y axes)
-- Dual vibration motor control
-- Built-in button debouncing
-- AT command communication support (version query, baud rate modification, etc.)
-- Memory-optimized design for resource-limited platforms
-
-## 安装 (Installation)
-### 方法一：通过 Arduino IDE 库管理器安装 (Method 1: Install via Arduino IDE Library Manager)
+## 安装
+### 方法一：通过 Arduino IDE 库管理器安装
 1. 打开 Arduino IDE
 2. 点击 "工具" > "管理库..."
 3. 在搜索框中输入 "YFPS2UART"
 4. 点击 "安装" 按钮
 
-### 方法二：手动安装 (Method 2: Manual Installation)
+### 方法二：手动安装
 1. 下载本库的 ZIP 文件
 2. 解压到 Arduino 库文件夹（通常位于 `Documents/Arduino/libraries`）
 3. 重启 Arduino IDE 以识别新库
 
-## 硬件连接 (Hardware Connection)
+## 硬件连接
 
-### Arduino UNO R3 连接 (Arduino UNO R3 Connection)
+### Arduino UNO R3 连接
 - 手柄模块 RX 连接到 Arduino TX (10)
 - 手柄模块 TX 连接到 Arduino RX (11)
 - 手柄模块 VCC 连接到 Arduino 5V
 - 手柄模块 GND 连接到 Arduino GND
 
-### ESP32 连接 (ESP32 Connection)
+### ESP32 连接
 - 手柄模块 RX 连接到 ESP32 TX (17)
 - 手柄模块 TX 连接到 ESP32 RX (16)
 - 手柄模块 VCC 连接到 ESP32 5V
 - 手柄模块 GND 连接到 ESP32 GND
 
-## 基本用法 (Basic Usage)
+## 基本用法
 
-### Arduino UNO 示例 (Arduino UNO Example)
+### Arduino UNO 示例
 ```cpp
 #include <YFPS2UART.h>
 
@@ -98,7 +87,7 @@ void loop() {
 }
 ```
 
-### ESP32 示例 (ESP32 Example)
+### ESP32 示例
 ```cpp
 #include <YFPS2UART.h>
 
@@ -116,53 +105,52 @@ void setup() {
 
 void loop() {
   // 与 Arduino UNO 示例相同
-  // Same as Arduino UNO example
 }
 ```
 
-## API 参考 (API Reference)
+## API 参考
 
-### 构造函数 (Constructor)
+### 构造函数
 - `YFPS2UART(uint8_t rxPin = 11, uint8_t txPin = 10)`: 创建 YFPS2UART 实例，指定 RX 和 TX 引脚
 
-### 初始化和配置 (Initialization and Configuration)
+### 初始化和配置
 - `void begin(unsigned long espBaud = 115200)`: 初始化库并设置串口通信，默认波特率 115200
 - `void setDebug(bool enable)`: 启用/禁用调试信息输出
 - `void setDebounceMs(uint16_t ms)`: 设置按键去抖时间（毫秒）
 
-### 数据更新和连接状态 (Data Update and Connection Status)
+### 数据更新和连接状态
 - `void update()`: 更新手柄数据，应在 loop() 中定期调用
 - `bool isRemoteConnected() const`: 检查手柄是否已连接
 - `bool hasRecentData(uint32_t timeoutMs = 1000) const`: 检查是否有最近的数据更新
 
-### 按键状态查询 (Button State Query)
+### 按键状态查询
 - `unsigned int getButtons()`: 返回去抖后的稳定按键值
 - `unsigned int getRawButtons()`: 返回未去抖的原始按键值
 - `bool Button(uint16_t button)`: 检查指定按键是否被按住
 - `bool ButtonPressed(uint16_t button)`: 检查指定按键是否刚被按下（边缘检测）
 - `bool ButtonReleased(uint16_t button)`: 检查指定按键是否刚被释放（边缘检测）
 
-### 摇杆值读取 (Joystick Value Reading)
+### 摇杆值读取
 - `uint8_t Analog(byte axis)`: 返回指定摇杆轴的模拟值（0-255）
   - PSS_LY: 左摇杆 Y 轴
   - PSS_LX: 左摇杆 X 轴
   - PSS_RY: 右摇杆 Y 轴
   - PSS_RX: 右摇杆 X 轴
 
-### 震动控制 (Vibration Control)
+### 震动控制
 - `void sendVibrate(uint8_t cmd)`: 发送震动命令
   - VIBRATE_BOTH: 双电机震动
   - VIBRATE_LEFT: 左电机震动
   - VIBRATE_RIGHT: 右电机震动
 
-### AT 命令 (AT Commands)
+### AT 命令
 - `void sendATCommand(const char *cmd)`: 发送 AT 命令
 - `void sendResetCommand()`: 发送软件复位命令
 - `bool sendSetBaud(uint32_t baud)`: 设置波特率（支持 9600 或 115200）
 - `bool sendATCommandWithResponse(const char *cmd, char *respBuf, size_t bufLen, uint32_t timeoutMs = 500)`: 发送命令并读取响应
 - `bool queryBaudRate(uint32_t& baudRate, uint32_t timeoutMs = 500)`: 查询当前波特率
 
-## 按键定义 (Button Definitions)
+## 按键定义
 ```cpp
 #define PSB_SELECT      0x0001
 #define PSB_L3          0x0002
@@ -182,44 +170,28 @@ void loop() {
 #define PSB_SQUARE      0x8000
 ```
 
-## 示例程序 (Example Programs)
+## 示例程序
 库包含以下示例程序：
 - `YFPS2UART_Demo`: 基本功能演示，包括按键和摇杆读取
 - `YFPS2UART_Demo_ChangeBAUD`: 波特率修改示例
 - `YFPS2UART_ESP_Demo`: ESP32 平台专用示例
 - `YFPS2UART_ESP_Demo_ChangeBAUD`: ESP32 平台波特率修改示例
 
-The library includes the following example programs:
-- `YFPS2UART_Demo`: Basic functionality demonstration including button and joystick reading
-- `YFPS2UART_Demo_ChangeBAUD`: Baud rate modification example
-- `YFPS2UART_ESP_Demo`: ESP32 platform-specific example
-- `YFPS2UART_ESP_Demo_ChangeBAUD`: ESP32 platform baud rate modification example
-
-## 内存优化 (Memory Optimization)
+## 内存优化
 本库针对资源有限的平台（如 Arduino UNO）进行了优化：
 - 使用 F() 宏存储字符串到 Flash 而非 RAM
 - 避免使用 String 类，减少动态内存分配
 - 最小化缓冲区大小
 - 移除未使用的成员变量
 
-This library is optimized for resource-limited platforms (such as Arduino UNO):
-- Uses F() macro to store strings in Flash instead of RAM
-- Avoids using String class to reduce dynamic memory allocation
-- Minimizes buffer sizes
-- Removes unused member variables
-
-## 故障排除 (Troubleshooting)
+## 故障排除
 1. **连接问题**：确保 RX/TX 引脚连接正确，波特率匹配
 2. **数据不更新**：检查手柄是否已配对，模块电源是否正常
 3. **内存不足**：使用 F() 宏存储字符串，减少不必要的变量
 4. **按键抖动**：调整 setDebounceMs() 参数
 
-## 许可 (License)
+## 许可
 本库采用 MIT 许可协议。详情请参阅 extras 目录中的 LICENSE 文件。
 
-This library is licensed under the MIT License. See the LICENSE file in the extras directory for more details.
-
-## 支持 (Support)
+## 支持
 如有任何问题或建议，请在 GitHub 仓库中提交 issue 或 pull request。
-
-For support and contributions, please open an issue in the repository or submit a pull request.
