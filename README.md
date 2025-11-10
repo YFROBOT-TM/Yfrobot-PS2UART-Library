@@ -1,4 +1,8 @@
-# YFPS2UART 库
+# YFPS2UART 库 [![English Version](https://img.shields.io/badge/-English-blue)](README.en.md)
+
+## 语言切换 (Language Switch)
+- [中文 (Chinese)](README.md)
+- [英文 (English)](README.en.md)
 
 ## 概述
 YFPS2UART 是一个功能强大的 Arduino 库，用于通过 UART 串行通信接口连接 PS2 手柄。该库支持多种 Arduino 兼容板，包括 Arduino UNO 和 ESP32 系列，提供了丰富的 API 用于读取按键状态、摇杆值、发送震动命令等功能。
