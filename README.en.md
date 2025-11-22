@@ -80,7 +80,7 @@ void setup() {
   Serial.begin(115200);
   ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // Set debounce time
-  ps2uart.begin(115200);      // Initialize serial communication
+  ps2uart.begin(9600);      // Initialize serial communication, UNO soft serial please use 9600 baud rate
   
   Serial.println("YFPS2UART example program started");
 }
@@ -126,7 +126,7 @@ void setup() {
   Serial.begin(115200);
   ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // Set debounce time
-  ps2uart.begin(115200);      // Initialize serial communication
+  ps2uart.begin(9600);      // Initialize serial communication
   
   Serial.println("YFPS2UART ESP32 example program started");
 }
@@ -142,7 +142,7 @@ void loop() {
 - `YFPS2UART(uint8_t rxPin = 11, uint8_t txPin = 10)`: Creates a YFPS2UART instance with specified RX and TX pins
 
 ### Initialization and Configuration
-- `void begin(unsigned long espBaud = 115200)`: Initializes the library and sets up serial communication, default baud rate is 115200
+- `void begin(unsigned long espBaud = 9600)`: Initializes the library and sets up serial communication, default baud rate is 9600.
 - `void setDebug(bool enable)`: Enables/disables debug information output
 - `void setDebounceMs(uint16_t ms)`: Sets button debounce time (milliseconds)
 
@@ -174,7 +174,7 @@ void loop() {
 ### AT Commands
 - `void sendATCommand(const char *cmd)`: Sends AT command
 - `void sendResetCommand()`: Sends software reset command
-- `bool sendSetBaud(uint32_t baud)`: Sets baud rate (supports 9600 or 115200)
+- `bool sendSetBaud(uint32_t baud)`: Sets baud rate (supports 9600, 19200, 38400, 57600, 115200)
 - `bool sendATCommandWithResponse(const char *cmd, char *respBuf, size_t bufLen, uint32_t timeoutMs = 500)`: Sends command and reads response
 - `bool queryBaudRate(uint32_t& baudRate, uint32_t timeoutMs = 500)`: Queries current baud rate
 
@@ -217,6 +217,10 @@ This library is optimized for resource-limited platforms (such as Arduino UNO):
 2. **Data Not Updating**: Check if controller is paired and module power is normal
 3. **Memory Insufficiency**: Use F() macro to store strings, reduce unnecessary variables
 4. **Button Jitter**: Adjust setDebounceMs() parameter
+
+## Update Log
+- 1.0.1: Fix UNO soft serial baud rate issue, default baud rate changed to 9600
+- 1.0.0: Initial version
 
 ## License
 This library is licensed under the MIT License. See the LICENSE file in the extras directory for more details.

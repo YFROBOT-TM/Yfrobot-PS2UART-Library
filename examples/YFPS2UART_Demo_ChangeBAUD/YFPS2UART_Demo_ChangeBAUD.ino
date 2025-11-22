@@ -1,6 +1,7 @@
 /*
  * YFPS2UART_Demo_ChangeBAUD.ino
- * 演示 YFPS2UARTLib 库的基本用法，修改波特率，支持9600和115200两种波特率
+ * 演示 YFPS2UARTLib 库的基本用法，修改波特率，支持9600, 19200, 38400, 57600, 115200波特率
+ * 注意：UNO软串口推荐使用9600或者19200，不推荐使用更高。
  * 
  * 波特率修改后，切记以下几点，以保证通信正常（重要）
  *    1、如果波特率修改成功，当前程序就已经无法通讯了。
@@ -16,15 +17,15 @@
 // Arduino UNO R3 引脚配置
 YFPS2UART ps2uart(11, 10);  // RX, TX (根据硬件调整)
 
-// 当前波特率，默认115200，仅允许 9600 或 115200
-uint32_t currentBaud = 115200;
+// 当前波特率，默认9600，支持波特例: 9600, 19200, 38400, 57600, 115200
+uint32_t currentBaud = 9600;
 uint32_t TARGET_BAUD = (currentBaud == 9600) ? 115200 : 9600;  // 目标波特率，与当前波特率相反
 
 void setup() {
   Serial.begin(115200);
   delay(50);
   Serial.println();
-  Serial.println("修改波特率例程");  // 支持波特例: 9600 ，115200
+  Serial.println("修改波特率例程");  // 支持波特例: 9600, 19200, 38400, 57600, 115200
 
   // ps2uart.setDebug(true);  // 调试信息打印。
 

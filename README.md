@@ -80,7 +80,7 @@ void setup() {
   Serial.begin(115200);
   ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // 设置去抖时间
-  ps2uart.begin(115200);      // 初始化串口通信
+  ps2uart.begin(9600);      // 初始化串口通信 UNO软串口请使用9600波特率
   
   Serial.println("YFPS2UART 示例程序已启动");
 }
@@ -126,7 +126,7 @@ void setup() {
   Serial.begin(115200);
   ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // 设置去抖时间
-  ps2uart.begin(115200);      // 初始化串口通信
+  ps2uart.begin(9600);      // 初始化串口通信
   
   Serial.println("YFPS2UART ESP32 示例程序已启动");
 }
@@ -142,7 +142,7 @@ void loop() {
 - `YFPS2UART(uint8_t rxPin = 11, uint8_t txPin = 10)`: 创建 YFPS2UART 实例，指定 RX 和 TX 引脚
 
 ### 初始化和配置
-- `void begin(unsigned long espBaud = 115200)`: 初始化库并设置串口通信，默认波特率 115200
+- `void begin(unsigned long espBaud = 9600)`: 初始化库并设置串口通信，默认波特率 9600
 - `void setDebug(bool enable)`: 启用/禁用调试信息输出
 - `void setDebounceMs(uint16_t ms)`: 设置按键去抖时间（毫秒）
 
@@ -174,7 +174,7 @@ void loop() {
 ### AT 命令
 - `void sendATCommand(const char *cmd)`: 发送 AT 命令
 - `void sendResetCommand()`: 发送软件复位命令
-- `bool sendSetBaud(uint32_t baud)`: 设置波特率（支持 9600 或 115200）
+- `bool sendSetBaud(uint32_t baud)`: 设置波特率（支持 9600, 19200, 38400, 57600, 115200）
 - `bool sendATCommandWithResponse(const char *cmd, char *respBuf, size_t bufLen, uint32_t timeoutMs = 500)`: 发送命令并读取响应
 - `bool queryBaudRate(uint32_t& baudRate, uint32_t timeoutMs = 500)`: 查询当前波特率
 
@@ -217,6 +217,10 @@ void loop() {
 2. **数据不更新**：检查手柄是否已配对，模块电源是否正常
 3. **内存不足**：使用 F() 宏存储字符串，减少不必要的变量
 4. **按键抖动**：调整 setDebounceMs() 参数
+
+## 更新日志
+- 1.0.1: 修复 UNO 软串口波特率问题，默认波特率改为 9600
+- 1.0.0: 初始版本
 
 ## 许可
 本库采用 MIT 许可协议。详情请参阅 extras 目录中的 LICENSE 文件。

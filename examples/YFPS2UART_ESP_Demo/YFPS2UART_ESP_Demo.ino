@@ -27,7 +27,7 @@ void setup() {
 
   ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // 可调整去抖时间，默认 10ms
-  ps2uart.begin(115200);      // 9600 或 115200，必须与模块波特保持一致，否则无法通讯
+  ps2uart.begin(9600);      // 必须与模块波特保持一致，否则无法通讯
   delay(100);
 
   // // 软件复位演示（功能测试，可选取消）
