@@ -69,18 +69,17 @@ YFPS2UART 是一个功能强大的 Arduino 库，用于通过 UART 串行通信�
 
 ## 基本用法
 
-### Arduino UNO 示例
+### Arduino UNO 示例（使用软件串口）
 ```cpp
 #include <YFPS2UART.h>
 
-// Arduino UNO R3 引脚配置
-YFPS2UART ps2uart(11, 10);  // RX, TX
+// Arduino UNO R3 引脚配置，使用软件串口
+YFPS2UART ps2uart(SERIALTYPE_SW, 11, 10);  // SerialType, RX, TX
 
 void setup() {
   Serial.begin(115200);
-  ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // 设置去抖时间
-  ps2uart.begin(9600);      // 初始化串口通信 UNO软串口请使用9600波特率
+  ps2uart.begin(9600);      // 初始化串口通信，软串口请使用9600波特率
   
   Serial.println("YFPS2UART 示例程序已启动");
 }
@@ -115,16 +114,35 @@ void loop() {
 }
 ```
 
+### Arduino UNO 示例（使用硬件串口）
+```cpp
+#include <YFPS2UART.h>
+
+// Arduino UNO R3 引脚配置，使用硬件串口
+YFPS2UART ps2uart(SERIALTYPE_HW, 11, 10, &Serial);  // SerialType, RX, TX, HardwareSerial*
+
+void setup() {
+  Serial.begin(115200);
+  ps2uart.setDebounceMs(10);  // 设置去抖时间
+  ps2uart.begin(9600);      // 初始化串口通信
+  
+  Serial.println("YFPS2UART 示例程序已启动");
+}
+
+void loop() {
+  // 与软件串口示例相同
+}
+```
+
 ### ESP32 示例
 ```cpp
 #include <YFPS2UART.h>
 
-// ESP32 引脚配置
+// ESP32 引脚配置，使用硬件串口
 YFPS2UART ps2uart(16, 17);  // RX, TX
 
 void setup() {
   Serial.begin(115200);
-  ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // 设置去抖时间
   ps2uart.begin(9600);      // 初始化串口通信
   
@@ -139,11 +157,22 @@ void loop() {
 ## API 参考
 
 ### 构造函数
-- `YFPS2UART(uint8_t rxPin = 11, uint8_t txPin = 10)`: 创建 YFPS2UART 实例，指定 RX 和 TX 引脚
+
+**Arduino UNO (AVR):**
+- `YFPS2UART(SerialType serialType = SERIALTYPE_SW, uint8_t rxPin = 11, uint8_t txPin = 10, HardwareSerial* hwSerial = &Serial)`: 创建 YFPS2UART 实例
+  - `serialType`: 串口类型，`SERIALTYPE_SW` (软件串口) 或 `SERIALTYPE_HW` (硬件串口)
+  - `rxPin`: RX 引脚号
+  - `txPin`: TX 引脚号
+  - `hwSerial`: 硬件串口指针（仅在 `serialType` 为 `SERIALTYPE_HW` 时使用）
+
+**ESP32:**
+- `YFPS2UART(uint8_t rxPin = 16, uint8_t txPin = 17, HardwareSerial* hwSerial = &Serial2)`: 创建 YFPS2UART 实例
+  - `rxPin`: RX 引脚号
+  - `txPin`: TX 引脚号
+  - `hwSerial`: 硬件串口指针（默认使用 Serial2）
 
 ### 初始化和配置
 - `void begin(unsigned long espBaud = 9600)`: 初始化库并设置串口通信，默认波特率 9600
-- `void setDebug(bool enable)`: 启用/禁用调试信息输出
 - `void setDebounceMs(uint16_t ms)`: 设置按键去抖时间（毫秒）
 
 ### 数据更新和连接状态
@@ -219,6 +248,7 @@ void loop() {
 4. **按键抖动**：调整 setDebounceMs() 参数
 
 ## 更新日志
+- 2.0.0: 增加硬件串口支持，解决软串口库与舵机库发生冲突问题，示例使用与1.X版本有区别 20260206
 - 1.0.1: 修复 UNO 软串口波特率问题，默认波特率改为 9600
 - 1.0.0: 初始版本
 

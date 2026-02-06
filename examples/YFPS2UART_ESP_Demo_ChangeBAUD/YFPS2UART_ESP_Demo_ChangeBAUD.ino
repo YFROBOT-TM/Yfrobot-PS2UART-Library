@@ -14,7 +14,7 @@
 #include <YFPS2UART.h>
 
 // ESP32 引脚配置
-YFPS2UART ps2uart(16, 17);  // RX, TX (根据硬件调整)
+YFPS2UART ps2uart(16, 17);  // RX, TX (根据硬件调整) 默认使用 Serial2
 
 // 当前波特率，默认9600，支持波特例: 9600, 19200, 38400, 57600, 115200
 uint32_t currentBaud = 9600;
@@ -25,8 +25,6 @@ void setup() {
   delay(50);
   Serial.println();
   Serial.println("修改波特率例程");  // 支持波特例: 9600, 19200, 38400, 57600, 115200
-
-  // ps2uart.setDebug(true);  // 调试信息打印。
 
   ps2uart.begin(currentBaud);  // 必须与模块波特保持一致，否则无法通讯
 

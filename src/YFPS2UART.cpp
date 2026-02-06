@@ -1,51 +1,64 @@
 #include "YFPS2UART.h"
 
 // 构造与析构
-YFPS2UART::YFPS2UART(uint8_t rxPin, uint8_t txPin)
-  : _sw(nullptr), _rxPin(rxPin), _txPin(txPin),
+#if defined(__AVR__) 
+YFPS2UART::YFPS2UART(SerialType serialType, uint8_t rxPin, uint8_t txPin, HardwareSerial* hwSerial)
+  : _serialType(serialType), _rxPin(rxPin), _txPin(txPin),
     _lastReceiveTime(0), _newData(false),
-    _debug(false), _ignoreIncoming(false),
+    _ignoreIncoming(false),
     _receiving(false), _ndx(0), _pendingStart(false),
     _rawButtons(0), _stableButtons(0),
     _prevStableButtons(0), _pressedEvents(0), _releasedEvents(0),
     _changedEvents(0), _lastButtons(0),
-    _debounceStartMs(0), _debounceMs(30), // 默认 30ms 去抖
-    _leftX(128), _leftY(127), _rightX(128), _rightY(127)
+    _debounceStartMs(0), _debounceMs(30),
+    _leftX(128), _leftY(127), _rightX(128), _rightY(127),
+    _sw(nullptr), _hw(hwSerial)
 {
-  for (int i = 0; i < 16; ++i) _holdStartMs[i] = 0;
-  // 延迟创建 SoftwareSerial 以便在 begin 时启动
+  if (_serialType == SERIALTYPE_SW) {
+    _sw = new SoftwareSerial(_rxPin, _txPin);
+    _serial = new SoftwareSerialAdapter(_sw);
+  } else {
+    if (_hw == nullptr) {
+      _hw = &Serial;
+    }
+    _serial = new HardwareSerialAdapter(_hw);
+  }
 }
+#elif defined(ESP32)
+YFPS2UART::YFPS2UART(uint8_t rxPin, uint8_t txPin, HardwareSerial* hwSerial)
+  : _serialType(SERIALTYPE_HW), _rxPin(rxPin), _txPin(txPin),
+    _lastReceiveTime(0), _newData(false),
+    _ignoreIncoming(false),
+    _receiving(false), _ndx(0), _pendingStart(false),
+    _rawButtons(0), _stableButtons(0),
+    _prevStableButtons(0), _pressedEvents(0), _releasedEvents(0),
+    _changedEvents(0), _lastButtons(0),
+    _debounceStartMs(0), _debounceMs(30),
+    _leftX(128), _leftY(127), _rightX(128), _rightY(127),
+    _hw(hwSerial)
+{
+  _serial = new HardwareSerialAdapter(_hw, _rxPin, _txPin);
+}
+#endif
 
 YFPS2UART::~YFPS2UART() {
-  if (_sw) {
-    delete _sw;
-    _sw = nullptr;
+#if defined(__AVR__) 
+  if (_serial) {
+    delete _serial;
+    _serial = nullptr;
   }
+#elif defined(ESP32)
+  if (_serial) {
+    delete _serial;
+    _serial = nullptr;
+  }
+#endif
 }
 
 
 void YFPS2UART::begin(unsigned long espBaud) {
-  // SoftwareSerial 与 ESP 通信
-  if (_sw) {
-    delete _sw;
-  }
-#if defined(__AVR__) || defined(ESP8266) || defined(NRF52) || defined(NRF5)
-  _sw = new SoftwareSerial(_rxPin, _txPin);
-  _sw->begin(espBaud);
-#elif defined(ESP32)
-  _sw = new HardwareSerial(2);  // 使用 UART2 (TX2=17, RX2=16)
-  _sw->begin(espBaud, SERIAL_8N1, _rxPin, _txPin);  // 初始化串口通信
-#endif
-
-  if (_debug) Serial.println("YFROBOT PS2UART begin");
-}
-
-
-void YFPS2UART::setDebug(bool enable) {
-  _debug = enable;
-  if (_debug) {
-    // 如果 Serial 尚未启动，用户应确保在 setup() 中已调用 begin()
-    Serial.println("PS2UART: debug enabled");
+  if (_serial) {
+    _serial->begin(espBaud);
   }
 }
 
@@ -106,10 +119,6 @@ void YFPS2UART::update() {
           
           // 更新稳定按键值
           _stableButtons = raw;
-          if (_debug) {
-            Serial.print("Buttons stable: 0x");
-            Serial.println(_stableButtons, HEX);
-          }
 
           // 计算按键状态变化
           uint16_t changed = _lastButtons ^ _stableButtons;
@@ -149,7 +158,8 @@ void YFPS2UART::update() {
 }
 
 void YFPS2UART::readDataFromSerial() {
-  if (!_sw) return;
+  if (!_serial) return;
+
   const byte start_MA = 0x0D;
   const byte end_MA = 0x0A;
   int rb;
@@ -159,12 +169,11 @@ void YFPS2UART::readDataFromSerial() {
     _receiving = true;
     _ndx = 0;
     _pendingStart = false;
-    if (_debug) Serial.println("readDataFromSerial: pending start -> begin receiving");
   }
 
-  while (_sw->available() > 0 && _newData == false) {
+  while (_serial->available() > 0 && _newData == false) {
     _lastReceiveTime = millis();
-    rb = _sw->read();
+    rb = _serial->read();
     if (rb < 0) break;
 
     // 如果收到断开标识 0xAB -> 进入忽略模式（不处理后续非协议数据）
@@ -173,7 +182,6 @@ void YFPS2UART::readDataFromSerial() {
       _ndx = 0;
       _newData = false;
       _ignoreIncoming = true;
-      if (_debug) Serial.println("RX: 0xAB (remote disconnected) -> ignoreIncoming=true");
       // 丢弃并继续
       continue;
     }
@@ -185,7 +193,6 @@ void YFPS2UART::readDataFromSerial() {
         _ignoreIncoming = false;
         _receiving = true;
         _ndx = 0;
-        if (_debug) Serial.println("RX: start_MA received -> exit ignore mode, start receiving");
       }
       // 否则一直丢弃字节
       continue;
@@ -203,19 +210,11 @@ void YFPS2UART::readDataFromSerial() {
         _receiving = false;
         _ndx = 0;
         _newData = true;
-        if (_debug) Serial.println("RX: end_MA received -> frame complete");
       }
     } else if ((uint8_t)rb == start_MA) {
       // 遇到起始字节，进入接收状态
       _receiving = true;
       _ndx = 0;
-      if (_debug) Serial.println("RX: start_MA received -> start receiving");
-    } else {
-      // 非协议字节，忽略
-      if (_debug) {
-        // Serial.print("RX: ignored byte ");
-        // Serial.println(rb, HEX);
-      }
     }
   }
 }
@@ -229,17 +228,15 @@ void YFPS2UART::readDataFromSerial() {
  *   - true = 远端已连接（非 0xAB 忽略模式），false = 远端断开（正在忽略数据）。
  */
 bool YFPS2UART::isRemoteConnected() const {
-  // 非 const 版本需要操作成员，因此转为非 const 行为
-  // 这里通过 const_cast 进行最小改动以允许在该函数中消费串口字节
+  if (!_serial) return false;
+
   YFPS2UART* self = const_cast<YFPS2UART*>(this);
-  if (!self->_sw) return false;
 
   const uint8_t start_MA = 0x0D;
   const uint8_t disconnect = 0xAB;
 
-  // 主动读取串口字节以判断连接/起始标志
-  while (self->_sw->available() > 0) {
-    int c = self->_sw->read();
+  while (_serial->available() > 0) {
+    int c = _serial->read();
     if (c < 0) break;
     uint8_t cb = (uint8_t)c;
 
@@ -248,7 +245,6 @@ bool YFPS2UART::isRemoteConnected() const {
       self->_ignoreIncoming = true;
       self->_receiving = false;
       self->_ndx = 0;
-      if (self->_debug) Serial.println("isRemoteConnected: got 0xAB -> ignoreIncoming=true");
       continue;
     }
 
@@ -256,7 +252,6 @@ bool YFPS2UART::isRemoteConnected() const {
       // 收到起始字节，标记 pendingStart，让 readDataFromSerial 在下一次运行时开始接收
       self->_pendingStart = true;
       self->_ignoreIncoming = false;
-      if (self->_debug) Serial.println("isRemoteConnected: got 0x0D -> pendingStart=true");
       break; // 发现 start 后可以退出，后续帧由 readDataFromSerial 处理
     }
 
@@ -276,10 +271,23 @@ bool YFPS2UART::isRemoteConnected() const {
  * @param cmd 震动控制命令字节，单字节命令值（0x01 双马达、0x02 左马达、0x03 右马达）
  */
 void YFPS2UART::sendVibrate(uint8_t cmd) {
-  // 检查串口对象是否有效，避免空指针访问
-  if (_sw) {
-    _sw->write(cmd);
+#if defined(__AVR__) 
+  if (_serial) {
+    if (_serialType == SERIALTYPE_HW) {
+      while (_serial->available() > 0) {
+        _serial->read();
+      }
+    }
+    _serial->write(cmd);
+    if (_serialType == SERIALTYPE_HW) {
+      _serial->flush();
+    }
   }
+#elif defined(ESP32)
+  if (_serial) {
+    _serial->write(cmd);
+  }
+#endif
 }
 
 
@@ -381,13 +389,16 @@ uint8_t YFPS2UART::Analog(byte axis) {
  *   - 无（void）。若未初始化 _sw 则直接返回。
  */
 void YFPS2UART::sendATCommand(const char *cmd) {
-  if (!_sw) return;
-  _sw->print(cmd);
-  _sw->print("\r\n");
-  if (_debug) {
-    Serial.print("TX AT: ");
-    Serial.println(cmd);
+  if (!_serial) return;
+  
+  while (_serial->available() > 0) {
+    _serial->read();
   }
+  
+  _serial->print(cmd);
+  _serial->print("\r\n");
+  
+  _serial->flush();
 }
 
 /*
@@ -414,19 +425,11 @@ void YFPS2UART::sendResetCommand() {
  */
 bool YFPS2UART::sendSetBaud(uint32_t baud) {
   if (baud != 9600 && baud != 115200) {
-    if (_debug) {
-      Serial.print("sendSetBaud: unsupported baud ");
-      Serial.println(baud);
-    }
     return false;
   }
 
-  if (_debug) {  Serial.print("set baud----- ");  Serial.println(baud);  }
   char cmdBuf[32];
-  // snprintf(cmdBuf, sizeof(cmdBuf), "AT+BAUD=%u", baud);
-  // 强制转换为 unsigned long，用 %lu 格式化
   snprintf(cmdBuf, sizeof(cmdBuf), "AT+BAUD=%lu", (unsigned long)baud);
-  if (_debug) {  Serial.print("set baud----- ");   Serial.println(cmdBuf);  }
   sendATCommand(cmdBuf);
 
   return true;
@@ -445,36 +448,29 @@ bool YFPS2UART::sendSetBaud(uint32_t baud) {
  *   - bool: true 表示收到响应并写入 respBuf（去掉末尾 CR/LF），false 表示超时或错误。
  */
 bool YFPS2UART::sendATCommandWithResponse(const char *cmd, char *respBuf, size_t bufLen, uint32_t timeoutMs) {
-  if (!_sw || !respBuf || bufLen < 2) return false;
+  if (!_serial || !respBuf || bufLen < 2) return false;
 
-  // 清空输出缓冲区
-  while (_sw->available()) _sw->read();
-
-  // 发送命令（追加 CR+LF）
-  _sw->print(cmd);
-  _sw->print("\r\n");
-
-  if (_debug) {
-    Serial.print("TX AT (with resp): ");
-    Serial.println(cmd);
+  while (_serial->available() > 0) {
+    _serial->read();
   }
 
-  // 读取一行响应，直到 '\n' 或超时
+  _serial->print(cmd);
+  _serial->print("\r\n");
+  
+  _serial->flush();
+
   size_t idx = 0;
   unsigned long start = millis();
   bool gotLine = false;
   while (millis() - start < timeoutMs) {
-    while (_sw->available() > 0) {
-      int c = _sw->read();
+    while (_serial->available() > 0) {
+      int c = _serial->read();
       if (c < 0) continue;
 
-      // 忽略0xAB字节（手柄未连接的标识），继续等待有效的响应
       if ((uint8_t)c == 0xAB) {
-        if (_debug) Serial.println("RX AT: ignoring 0xAB byte");
         continue;
       }
 
-      // 防止溢出，保留一个字节给 NUL
       if (idx < bufLen - 1) {
         respBuf[idx++] = (char)c;
       }
@@ -484,28 +480,17 @@ bool YFPS2UART::sendATCommandWithResponse(const char *cmd, char *respBuf, size_t
       }
     }
     if (gotLine) break;
-    // 小延时避免忙等（可去掉以更低延迟）
-    // delay(1);
   }
 
-  // NUL 结尾
   if (idx >= bufLen) idx = bufLen - 1;
   respBuf[idx] = '\0';
 
   if (!gotLine) {
-    if (_debug) Serial.println("RX AT: timeout");
     return false;
   }
 
-  // 去掉末尾的 CR/LF
-  // 去除末尾的 '\n' 和可能的 '\r'
   while (idx > 0 && (respBuf[idx - 1] == '\n' || respBuf[idx - 1] == '\r')) {
     respBuf[--idx] = '\0';
-  }
-
-  if (_debug) {
-    Serial.print("RX AT: ");
-    Serial.println(respBuf);
   }
 
   return true;
@@ -525,29 +510,15 @@ bool YFPS2UART::sendATCommandWithResponse(const char *cmd, char *respBuf, size_t
 bool YFPS2UART::queryBaudRate(uint32_t& baudRate, uint32_t timeoutMs) {
   char respBuf[32];
   
-  // 发送AT+BAUD?命令并等待响应
   bool ok = sendATCommandWithResponse("AT+BAUD?", respBuf, sizeof(respBuf), timeoutMs);
   
   if (!ok) {
-    if (_debug) {
-      Serial.println("queryBaudRate: failed to get response");
-    }
     return false;
   }
   
-  // 解析返回的波特率值
   baudRate = (uint32_t)atol(respBuf);
   
-  if (_debug) {
-    Serial.print("queryBaudRate: current baud rate is ");
-    Serial.println(baudRate);
-  }
-  
-  // 验证波特率是否为有效值
   if (baudRate == 0) {
-    if (_debug) {
-      Serial.println("queryBaudRate: invalid baud rate received");
-    }
     return false;
   }
   
@@ -565,14 +536,7 @@ bool YFPS2UART::queryBaudRate(uint32_t& baudRate, uint32_t timeoutMs) {
  */
 bool YFPS2UART::sendATCommandPrintResponse(const char *cmd, uint32_t timeoutMs) {
   char buf[128];
-  bool ok = sendATCommandWithResponse(cmd, buf, sizeof(buf), timeoutMs);
-  if (ok) {
-    Serial.print("AT RESP: ");
-    Serial.println(buf);
-  } else {
-    Serial.println("AT RESP: <timeout>");
-  }
-  return ok;
+  return sendATCommandWithResponse(cmd, buf, sizeof(buf), timeoutMs);
 }
 
 

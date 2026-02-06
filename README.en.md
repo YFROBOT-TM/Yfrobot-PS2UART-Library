@@ -69,18 +69,17 @@ The YFPS2UART is a powerful Arduino library for connecting PS2 controllers via U
 
 ## Basic Usage
 
-### Arduino UNO Example
+### Arduino UNO Example (Software Serial)
 ```cpp
 #include <YFPS2UART.h>
 
-// Arduino UNO R3 pin configuration
-YFPS2UART ps2uart(11, 10);  // RX, TX
+// Arduino UNO R3 pin configuration, using software serial
+YFPS2UART ps2uart(SERIALTYPE_SW, 11, 10);  // SerialType, RX, TX
 
 void setup() {
   Serial.begin(115200);
-  ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // Set debounce time
-  ps2uart.begin(9600);      // Initialize serial communication, UNO soft serial please use 9600 baud rate
+  ps2uart.begin(9600);      // Initialize serial communication, soft serial please use 9600 baud rate
   
   Serial.println("YFPS2UART example program started");
 }
@@ -115,16 +114,35 @@ void loop() {
 }
 ```
 
+### Arduino UNO Example (Hardware Serial)
+```cpp
+#include <YFPS2UART.h>
+
+// Arduino UNO R3 pin configuration, using hardware serial
+YFPS2UART ps2uart(SERIALTYPE_HW, 11, 10, &Serial);  // SerialType, RX, TX, HardwareSerial*
+
+void setup() {
+  Serial.begin(115200);
+  ps2uart.setDebounceMs(10);  // Set debounce time
+  ps2uart.begin(9600);      // Initialize serial communication
+  
+  Serial.println("YFPS2UART example program started");
+}
+
+void loop() {
+  // Same as software serial example
+}
+```
+
 ### ESP32 Example
 ```cpp
 #include <YFPS2UART.h>
 
-// ESP32 pin configuration
+// ESP32 pin configuration, using hardware serial
 YFPS2UART ps2uart(16, 17);  // RX, TX
 
 void setup() {
   Serial.begin(115200);
-  ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // Set debounce time
   ps2uart.begin(9600);      // Initialize serial communication
   
@@ -139,11 +157,22 @@ void loop() {
 ## API Reference
 
 ### Constructor
-- `YFPS2UART(uint8_t rxPin = 11, uint8_t txPin = 10)`: Creates a YFPS2UART instance with specified RX and TX pins
+
+**Arduino UNO (AVR):**
+- `YFPS2UART(SerialType serialType = SERIALTYPE_SW, uint8_t rxPin = 11, uint8_t txPin = 10, HardwareSerial* hwSerial = &Serial)`: Creates a YFPS2UART instance
+  - `serialType`: Serial type, `SERIALTYPE_SW` (software serial) or `SERIALTYPE_HW` (hardware serial)
+  - `rxPin`: RX pin number
+  - `txPin`: TX pin number
+  - `hwSerial`: Hardware serial pointer (only used when `serialType` is `SERIALTYPE_HW`)
+
+**ESP32:**
+- `YFPS2UART(uint8_t rxPin = 16, uint8_t txPin = 17, HardwareSerial* hwSerial = &Serial2)`: Creates a YFPS2UART instance
+  - `rxPin`: RX pin number
+  - `txPin`: TX pin number
+  - `hwSerial`: Hardware serial pointer (defaults to Serial2)
 
 ### Initialization and Configuration
 - `void begin(unsigned long espBaud = 9600)`: Initializes the library and sets up serial communication, default baud rate is 9600.
-- `void setDebug(bool enable)`: Enables/disables debug information output
 - `void setDebounceMs(uint16_t ms)`: Sets button debounce time (milliseconds)
 
 ### Data Update and Connection Status
@@ -219,6 +248,7 @@ This library is optimized for resource-limited platforms (such as Arduino UNO):
 4. **Button Jitter**: Adjust setDebounceMs() parameter
 
 ## Update Log
+- 2.0.0: Added hardware serial support to resolve conflicts between software serial library and servo library. Usage differs from version 1.X (2026-02-06)
 - 1.0.1: Fix UNO soft serial baud rate issue, default baud rate changed to 9600
 - 1.0.0: Initial version
 

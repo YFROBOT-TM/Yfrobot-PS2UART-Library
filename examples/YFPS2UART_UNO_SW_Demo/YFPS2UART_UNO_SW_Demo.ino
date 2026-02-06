@@ -4,13 +4,17 @@
  * 获取按键、摇杆信息、打印所有按键的按下和释放状态、发送 AT 命令；
  * 新增：按下X键、O键和方形键时触发不同震动模式的功能
  * 
+ * 串口方案：使用 SoftwareSerial（默认方案）
+ * - 引脚灵活，可自定义 RX/TX
+ * - 可能与舵机库冲突，适用于不使用舵机的项目
+ * 
  * @ YFROBOT
  * @ 2025-11-06
 */
 #include <YFPS2UART.h>
 
-// Arduino UNO R3 引脚配置
-YFPS2UART ps2uart(11, 10);  // RX, TX (根据硬件调整)
+// Arduino UNO R3 软串口引脚配置
+YFPS2UART ps2uart(SERIALTYPE_SW, 11, 10); // RX TX (根据硬件调整)
 
 // 手柄连接成功，只输出一次提示
 static bool connectedNotified = false;
@@ -25,9 +29,8 @@ void setup() {
   Serial.println(F("按下L1或R1时将打印摇杆值"));
   Serial.println(F("====================================="));
 
-  ps2uart.setDebug(false);
   ps2uart.setDebounceMs(10);  // 可调整去抖时间，默认 10ms
-  ps2uart.begin(9600);      // 必须与模块波特保持一致，否则无法通讯
+  ps2uart.begin(9600);        // 必须与模块波特保持一致，否则无法通讯
   delay(100);
 
   // // 软件复位演示（功能测试，可选取消）
@@ -36,14 +39,18 @@ void setup() {
   // delay(2000);  // 必要等待模块重启完成
 
   // 查询模块固件版本（功能测试，可选取消）
-  char verBuf[32]; // 减小缓冲区大小
+  char verBuf[32];  // 减小缓冲区大小
   Serial.println(F("获取模块固件版本，测试指令可取消..."));
   if (ps2uart.sendATCommandWithResponse("AT+VER", verBuf, sizeof(verBuf), 500)) {
     delay(500);
     Serial.print(F("PS2 UART VER: "));
     Serial.println(verBuf);
   } else {
-    Serial.println(F("无法获取固件版本，请检查连接！"));
+    Serial.println(F("无法获取固件版本，请检查连接并重启复位！"));
+    while (1) {
+      delay(500);
+      Serial.println(F("请检查连接并重启复位！"));
+    }
   }
 
   Serial.println();
@@ -112,19 +119,19 @@ void loop() {
   if (ps2uart.ButtonPressed(PSB_CROSS)) {
     ps2uart.sendVibrate(VIBRATE_BOTH);
     Serial.println(F("X just pressed"));
-      Serial.println(F("X键 (绿色) - 双电机震动"));
+    Serial.println(F("X键 (绿色) - 双电机震动"));
   }
   // 检测O键 (红色) - 左电机震动
   if (ps2uart.ButtonPressed(PSB_CIRCLE)) {
     ps2uart.sendVibrate(VIBRATE_LEFT);
     Serial.println(F("Circle just pressed"));
-      Serial.println(F("O键 (红色) - 左电机震动"));
+    Serial.println(F("O键 (红色) - 左电机震动"));
   }
   // 检测方形键 (蓝色) - 右电机震动
   if (ps2uart.ButtonPressed(PSB_SQUARE)) {
     ps2uart.sendVibrate(VIBRATE_RIGHT);
     Serial.println(F("Square just pressed"));
-      Serial.println(F("方形键 (蓝色) - 右电机震动"));
+    Serial.println(F("方形键 (蓝色) - 右电机震动"));
   }
 
   // 按住 L1 或 R1 时持续打印摇杆值
