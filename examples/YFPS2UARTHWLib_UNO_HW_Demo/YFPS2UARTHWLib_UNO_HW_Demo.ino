@@ -63,5 +63,5 @@ void loop() {
     ps2uart.sendVibrate(VIBRATE_BOTH);
   }
   
-  delay(20);
+  delay(40);
 }

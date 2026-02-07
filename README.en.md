@@ -248,6 +248,7 @@ This library is optimized for resource-limited platforms (such as Arduino UNO):
 4. **Button Jitter**: Adjust setDebounceMs() parameter
 
 ## Update Log
+- 2.0.1: Added board types defined(ESP8266) || defined(NRF52) || defined(NRF5) for testing with AVR board types. Users are encouraged to test with their own board types. (2026-02-07)
 - 2.0.0: Added hardware serial support to resolve conflicts between software serial library and servo library. Usage differs from version 1.X (2026-02-06)
 - 1.0.1: Fix UNO soft serial baud rate issue, default baud rate changed to 9600
 - 1.0.0: Initial version

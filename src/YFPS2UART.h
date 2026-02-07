@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 
-#if defined(__AVR__) 
+#if defined(__AVR__) || defined(ESP8266) || defined(NRF52) || defined(NRF5) 
 #include <SoftwareSerial.h>
 #include <HardwareSerial.h>
 #elif defined(ESP32)
@@ -60,7 +60,7 @@ public:
     }
 };
 
-#if defined(__AVR__)
+#if defined(__AVR__) || defined(ESP8266) || defined(NRF52) || defined(NRF5)
 // 软件串口适配器
 class SoftwareSerialAdapter : public SerialBase {
 private:
@@ -128,7 +128,7 @@ class YFPS2UART {
 public:
     // Constructor
     // 构造函数优化：如果是 AVR，可以选软硬串口；如果是 ESP32，强制硬串口
-#if defined(__AVR__) 
+#if defined(__AVR__) || defined(ESP8266) || defined(NRF52) || defined(NRF5) 
     YFPS2UART(SerialType serialType = SERIALTYPE_SW, uint8_t rxPin = 11, uint8_t txPin = 10, HardwareSerial* hwSerial = &Serial);
 #elif defined(ESP32) 
     YFPS2UART(uint8_t rxPin = 16, uint8_t txPin = 17, HardwareSerial* hwSerial = &Serial2);
@@ -191,7 +191,7 @@ public:
 private:
 
     SerialBase* _serial;         // 统一指向当前使用的串口对象
-#if defined(__AVR__) 
+#if defined(__AVR__) || defined(ESP8266) || defined(NRF52) || defined(NRF5) 
     SoftwareSerial* _sw;     // 仅在软串口模式下分配内存
     HardwareSerial* _hw;
     SerialType _serialType;

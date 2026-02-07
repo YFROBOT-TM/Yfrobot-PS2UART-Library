@@ -1,7 +1,7 @@
 #include "YFPS2UART.h"
 
 // 构造与析构
-#if defined(__AVR__) 
+#if defined(__AVR__) || defined(ESP8266) || defined(NRF52) || defined(NRF5)
 YFPS2UART::YFPS2UART(SerialType serialType, uint8_t rxPin, uint8_t txPin, HardwareSerial* hwSerial)
   : _serialType(serialType), _rxPin(rxPin), _txPin(txPin),
     _lastReceiveTime(0), _newData(false),
@@ -42,7 +42,7 @@ YFPS2UART::YFPS2UART(uint8_t rxPin, uint8_t txPin, HardwareSerial* hwSerial)
 #endif
 
 YFPS2UART::~YFPS2UART() {
-#if defined(__AVR__) 
+#if defined(__AVR__) || defined(ESP8266) || defined(NRF52) || defined(NRF5) 
   if (_serial) {
     delete _serial;
     _serial = nullptr;
@@ -271,7 +271,7 @@ bool YFPS2UART::isRemoteConnected() const {
  * @param cmd 震动控制命令字节，单字节命令值（0x01 双马达、0x02 左马达、0x03 右马达）
  */
 void YFPS2UART::sendVibrate(uint8_t cmd) {
-#if defined(__AVR__) 
+#if defined(__AVR__) || defined(ESP8266) || defined(NRF52) || defined(NRF5) 
   if (_serial) {
     if (_serialType == SERIALTYPE_HW) {
       while (_serial->available() > 0) {

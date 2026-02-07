@@ -145,5 +145,5 @@ void loop() {
     Serial.print(",");
     Serial.println(ps2uart.Analog(PSS_RX), DEC);
   }
-  delay(20);
+  delay(40);
 }
